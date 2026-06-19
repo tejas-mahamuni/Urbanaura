@@ -42,6 +42,9 @@ public class DashboardController {
 
     @Autowired
     private LocalityRepository localityRepository;
+    
+    @Autowired
+    private com.urbanaura.urbanaura.repository.UserRepository userRepository;
 
     @GetMapping("/admin/load-data")
     @ResponseBody
@@ -156,8 +159,14 @@ public class DashboardController {
                 : preferredProperties;
 
         model.addAttribute("properties", top10);
+        model.addAttribute("mapProperties", propertyDtos);
         model.addAttribute("isAuthenticated", isAuthenticated);
         model.addAttribute("username", isAuthenticated ? authentication.getName() : null);
+        if (isAuthenticated) {
+            userRepository.findByUsername(authentication.getName()).ifPresent(user -> {
+                model.addAttribute("currentUserId", user.getId());
+            });
+        }
         model.addAttribute("isAdmin", isAuthenticated && authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch("ROLE_ADMIN"::equals));

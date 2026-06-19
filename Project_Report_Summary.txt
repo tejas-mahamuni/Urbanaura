@@ -25,7 +25,7 @@ The application utilizes a robust, microservice-inspired monolithic architecture
    * Relational Database (MySQL 8.0) for structured, ACID-compliant transactional data (Users, Properties).
    * NoSQL Database (MongoDB 6.0) for high-velocity, schema-less data streaming (Live AQI Sensor Logs).
 - Security: Spring Security (Role-based access control with Filter/Interceptor chains).
-- Deployment: Dockerized database containers with an Embedded Apache Tomcat web server.
+- Deployment: Local execution with embedded Apache Tomcat web server.
 
 5. KEY TECHNICAL IMPLEMENTATIONS
 --------------------------------

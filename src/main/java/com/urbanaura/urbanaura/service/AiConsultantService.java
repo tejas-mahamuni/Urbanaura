@@ -69,7 +69,8 @@ public class AiConsultantService {
                 "3. Use emojis to guide the eye at the start of sections, do NOT clutter with symbols.\n" +
                 "4. One main idea per line.\n" +
                 "5. VERY IMPORTANT: Bold the key metrics (like property **Names**, **Prices**, and **Safety Ratings**) using markdown **asterisks**.\n" +
-                "6. NEVER guess properties not in the context.\n\n" +
+                "6. NEVER guess properties not in the context.\n" +
+                "7. STRICT CONFINEMENT: If the user's query cannot be answered using ONLY the provided DATABASE CONTEXT, you MUST refuse to answer and politely state: 'I can only provide insights based on the UrbanAura property database. I do not have information to answer that.' Do not use outside general knowledge.\n\n" +
                 "EXACT DESIRED ANSWER FORMAT:\n" +
                 "🏠 Best Options in **[Locality]**\n\n" +
                 "💰 Price Comparison\n" +

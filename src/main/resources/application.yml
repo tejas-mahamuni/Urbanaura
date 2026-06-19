@@ -5,8 +5,7 @@ spring:
   # MySQL Configuration
   datasource:
     url: ${MYSQL_URL:jdbc:mysql://localhost:3307/urbanaura?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
-    username: ${MYSQL_USERNAME:root}
-    password: ${MYSQL_PASSWORD:admin717}
+  
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -22,12 +21,12 @@ spring:
   # MongoDB Configuration
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb+srv://urbanaura:urban%402@cluster0.dlxkvgm.mongodb.net/urbanaura?appName=Cluster0}
+      uri: ${MONGODB_URI:mongodb://admin:password@localhost:27017/urbanaura?authSource=admin}
 
   # AI Configuration
   ai:
     openai:
-      api-key: ${GROQ_API_KEY:default-key}
+      api-key: ${GROQ_API_KEY}
       base-url: https://api.groq.com/openai
       chat:
         options:

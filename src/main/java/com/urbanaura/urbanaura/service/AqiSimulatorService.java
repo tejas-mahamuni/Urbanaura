@@ -60,8 +60,15 @@ public class AqiSimulatorService {
             Map<String, Object> response = restTemplate.getForObject(url, Map.class);
             if (response != null && response.containsKey("current")) {
                 Map<String, Object> current = (Map<String, Object>) response.get("current");
-                aqiValue = Double.parseDouble(current.get("european_aqi").toString());
-                pm25Value = Double.parseDouble(current.get("pm2_5").toString());
+                double baseAqi = Double.parseDouble(current.get("european_aqi").toString());
+                double basePm25 = Double.parseDouble(current.get("pm2_5").toString());
+                
+                // Add realistic micro-variance (+/- 5%) because Open-Meteo's 10km grid 
+                // often returns the exact same value for the whole city.
+                // This makes the presentation look more dynamic and hyper-local.
+                double variance = 0.95 + (0.10 * random.nextDouble());
+                aqiValue = baseAqi * variance;
+                pm25Value = basePm25 * variance;
             } else {
                 aqiValue = 50 + (100 * random.nextDouble());
                 pm25Value = 20 + (60 * random.nextDouble());

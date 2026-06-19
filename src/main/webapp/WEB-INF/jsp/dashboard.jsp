@@ -119,9 +119,12 @@
                                     <!-- JSTL Number Format Tag -->
                                     <span class="fs-5 fw-bolder">₹<fmt:formatNumber value="${prop.price}" type="number" groupingUsed="true" /></span>
                                 </div>
-                                <button class="apple-btn px-4" data-bs-toggle="modal" data-bs-target="#inquiryModal" onclick="document.getElementById('propId').value = '${prop.id}';">Inquire</button>
-                            </div>
-                        </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-primary px-3 rounded-pill fw-bold" style="font-size: 14px;" onclick="openChatDrawer('${prop.id}', '${prop.title}')">
+                                        <i data-lucide="message-circle" style="width: 14px; margin-top:-2px;"></i> Chat
+                                    </button>
+                                    <button class="apple-btn px-4" data-bs-toggle="modal" data-bs-target="#inquiryModal" onclick="document.getElementById('propId').value = '${prop.id}';">Inquire</button>
+                                </div>
                     </div>
                 </div>
             </c:forEach>
@@ -152,6 +155,31 @@
                 </button>
             </form>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Drawer (Offcanvas) -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="chatDrawer" aria-labelledby="chatDrawerLabel" style="width: 400px; border-radius: 20px 0 0 20px; box-shadow: -10px 0 40px rgba(0,0,0,0.1);">
+      <div class="offcanvas-header border-bottom">
+        <div>
+          <h5 class="offcanvas-title fw-bold" id="chatDrawerLabel">Chat with Owner</h5>
+          <small class="text-secondary" id="chatPropertyTitle">Loading property...</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body d-flex flex-column p-0 bg-light">
+        <div class="flex-grow-1 p-3 overflow-auto d-flex flex-column gap-2" id="userMessagesContainer">
+            <!-- Messages go here -->
+            <div class="text-center text-muted small my-3">Start of conversation</div>
+        </div>
+        <div class="p-3 bg-white border-top">
+            <div class="input-group">
+                <input type="text" id="userMessageInput" class="form-control rounded-pill me-2 px-3" placeholder="Type a message...">
+                <button class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;" id="userSendBtn">
+                    <i data-lucide="send" style="width: 18px; color: white;"></i>
+                </button>
+            </div>
         </div>
       </div>
     </div>
@@ -201,6 +229,62 @@
             alert("Property inquiry logged securely! An agent will call you within 20 mins.");
             return true;
         }
+    </script>
+
+    <!-- Websocket Scripts for Chat -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script type="module">
+        import wsManager from '/js/websocket.js';
+        
+        // Expose openChatDrawer to global scope for onclick handler
+        window.openChatDrawer = function(propertyId, propertyTitle) {
+            window.activeChatPropertyId = propertyId;
+            document.getElementById('chatPropertyTitle').innerText = propertyTitle;
+            const chatOffcanvas = new bootstrap.Offcanvas(document.getElementById('chatDrawer'));
+            chatOffcanvas.show();
+        };
+
+        // Mock User ID - replace with session principal id
+        const currentUserId = 12; // Test user ID
+        const adminId = 1; // Send to admin
+        
+        wsManager.connect(currentUserId, () => {
+            console.log("User connected to socket for chat");
+        });
+
+        wsManager.onMessageReceived((msg) => {
+            if (msg.propertyId == window.activeChatPropertyId) {
+                appendUserMessage(msg.content, msg.senderId == currentUserId ? 'sent' : 'received');
+            }
+        });
+
+        function appendUserMessage(content, type) {
+            const container = document.getElementById('userMessagesContainer');
+            const msgDiv = document.createElement('div');
+            // WhatsApp style bubbles
+            msgDiv.className = `p-2 px-3 rounded-4 ${type === 'sent' ? 'bg-primary text-white align-self-end ms-4' : 'bg-white align-self-start me-4 border'}`;
+            msgDiv.style.maxWidth = '85%';
+            msgDiv.style.fontSize = '0.9rem';
+            msgDiv.textContent = content;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        document.getElementById('userSendBtn').addEventListener('click', () => {
+            const input = document.getElementById('userMessageInput');
+            const content = input.value.trim();
+            if (content && window.activeChatPropertyId) {
+                wsManager.sendMessage(adminId, window.activeChatPropertyId, content);
+                input.value = '';
+            }
+        });
+        
+        document.getElementById('userMessageInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                document.getElementById('userSendBtn').click();
+            }
+        });
     </script>
 </body>
 </html>

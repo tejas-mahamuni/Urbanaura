@@ -175,9 +175,26 @@
         .chat-window.active{display:flex;opacity:1;transform:translateY(0) scale(1)}
         .chat-header{padding:16px 20px;background:rgba(183,92,54,.06);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;font-weight:600}
         .chat-history{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;font-size:14px}
-        .chat-msg{max-width:85%;padding:12px 16px;border-radius:18px;line-height:1.5;white-space:pre-wrap}
-        .msg-ai{background:rgba(0,0,0,.05);align-self:flex-start;border-bottom-left-radius:4px}
-        .msg-user{background:linear-gradient(135deg,var(--accent),var(--accent-deep));color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+        .chat-msg { max-width: 85%; padding: 12px 16px; border-radius: 18px; line-height: 1.5; white-space: pre-wrap; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        .msg-ai { background: rgba(0,0,0,0.05); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .msg-user { background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+        
+        .chat-list-item { padding: 16px 20px; border-bottom: 1px solid var(--line); cursor: pointer; transition: all 0.2s; border-left: 4px solid transparent; }
+        .chat-list-item:hover { background: #f8fbfb; }
+        .chat-list-item.active { background: #f0f7f7; border-left-color: var(--accent); }
+        .chat-list-item.unread { background: rgba(15,157,138,0.06); border-left-color: rgba(15,157,138,0.5); }
+        .chat-list-item.unread .fw-bold { color: var(--accent) !important; }
+        .chat-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; flex-shrink: 0; }
+        .chat-message { max-width: 85%; padding: 12px 16px; border-radius: 18px; margin-bottom: 12px; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); line-height: 1.5;}
+        .chat-message.sent { background: linear-gradient(135deg, var(--accent), var(--accent-deep)); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .chat-message.received { background: #ffffff; border: 1px solid rgba(19,37,44,0.1); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; }
+        
+        #userHubDrawer { right: -850px; width: 800px; max-width: 95vw; padding: 0; }
+        #userHubDrawer.open { right: 0; }
+        @media (max-width: 850px) {
+            #userHubDrawer { width: 100%; right: -100%; }
+        }
+        
         .typing span{animation:blink 1.4s infinite both;font-size:24px;line-height:0.5;margin:0 1px}
         .typing span:nth-child(2){animation-delay:0.2s}
         .typing span:nth-child(3){animation-delay:0.4s}
@@ -248,6 +265,7 @@
                         </a>
                     </c:when>
                     <c:otherwise>
+                        <span class="pill" style="font-weight:600; cursor:pointer; border: 1px solid rgba(15,157,138,0.3); background: #f0f7f7; color: var(--accent-deep);" onclick="openUserHub()">My Chats</span>
                         <span class="pill" style="font-weight:600;">Signed in as <c:out value="${username}"/></span>
                     </c:otherwise>
                 </c:choose>
@@ -483,6 +501,7 @@
         <div class="section-label">Operations</div>
         <div class="drawer-actions">
             <button type="button" class="btn" onclick="openBookingFromDrawer()">Book a Visit</button>
+            <button type="button" class="btn" style="background: linear-gradient(135deg, #25D366, #128C7E);" onclick="openChatFromDrawer()">Chat with Owner</button>
             <button type="button" class="btn-secondary-inline" onclick="compareSelectedProperty()">Compare with nearby properties</button>
             <c:if test="${isAdmin}"><a href="/admin/report/generate" target="_blank" style="text-decoration:none;"><button type="button" class="btn-alt">Open Admin Report</button></a></c:if>
         </div>
@@ -535,6 +554,38 @@
     </div>
     <div id="compareContent" class="compare-empty">Pick at least two properties to open side-by-side comparison.</div>
 </section>
+
+<div id="ownerChatBackdrop" class="backdrop" style="z-index:2100" onclick="closeUserHub()"></div>
+<aside id="userHubDrawer" class="drawer" style="z-index:2200; display:flex; flex-direction:column;" aria-hidden="true">
+    <div style="display:flex; flex:1; min-height:0;">
+        <!-- Left Pane: Chat List -->
+        <div style="width: 320px; border-right: 1px solid var(--line); display:flex; flex-direction:column; background: #fff; flex-shrink: 0;">
+            <div style="padding: 24px; border-bottom: 1px solid var(--line);">
+                <div class="eyebrow" style="margin-bottom:10px;">Communications</div>
+                <h3 style="font-size:24px; letter-spacing:-0.035em;">My Chats</h3>
+            </div>
+            <div id="userChatList" style="flex:1; overflow-y:auto; background: #fafdfd;">
+            </div>
+        </div>
+        <!-- Right Pane: Active Chat -->
+        <div style="flex:1; display:flex; flex-direction:column; background: rgba(246,251,252,0.5);">
+            <div style="padding: 24px; border-bottom: 1px solid var(--line); display:flex; justify-content:space-between; align-items:center; background: #fff;">
+                <div>
+                    <h3 id="chatPropTitle" style="font-size:20px; margin-bottom:4px;">Select a conversation</h3>
+                    <div id="chatAdminName" style="font-size:13px; color:var(--muted);"></div>
+                </div>
+                <button type="button" class="close" style="position:static;" onclick="closeUserHub()" aria-label="Close chat">&times;</button>
+            </div>
+            <div id="userMessagesContainer" style="flex-grow:1; overflow-y:auto; padding: 24px; display:flex; flex-direction:column; gap:10px;">
+                <div style="text-align:center; font-size:12px; color:var(--muted); margin-top: auto; margin-bottom: auto;">Select a chat from the left to start messaging.</div>
+            </div>
+            <div style="flex-shrink:0; padding: 16px 24px; border-top:1px solid var(--line); display:flex; gap:10px; background: #fff;">
+                <input type="text" id="userMessageInput" class="search-pill" style="flex-grow:1;" placeholder="Type reply..." disabled onkeypress="if(event.key === 'Enter') document.getElementById('userSendBtn').click();">
+                <button id="userSendBtn" class="btn" style="padding: 12px 18px;" disabled onclick="sendUserChat()">Send</button>
+            </div>
+        </div>
+    </div>
+</aside>
 
 <c:if test="${isAuthenticated}">
     <button class="chat-bubble-btn" type="button" onclick="toggleChatWindow()">AI</button>
@@ -694,10 +745,141 @@ document.getElementById('detailAuraCopy').textContent=d.aqi!==null?'Latest AQI i
     function toggleChatWindow(){if(!chatEnabled)return;document.getElementById('chatWindow').classList.toggle('active')}
     function addMsg(c,type){const h=document.getElementById('chatHistory');if(!h)return;const d=document.createElement('div');d.className='chat-msg '+(type==='user'?'msg-user':'msg-ai');if(type==='user')d.textContent=c;else d.innerHTML=c.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');h.appendChild(d);h.scrollTop=h.scrollHeight}
     async function sendChatMessage(e){e.preventDefault();const input=document.getElementById('chatInput');if(!input||!input.value.trim())return;const q=input.value.trim();addMsg(q,'user');input.value='';const h=document.getElementById('chatHistory');const t=document.createElement('div');t.className='chat-msg msg-ai typing';t.id='typingBubble';t.innerHTML='<span>.</span><span>.</span><span>.</span>';h.appendChild(t);h.scrollTop=h.scrollHeight;try{const r=await fetch('/ai/consult',{method:'POST',headers:{'Content-Type':'application/json',[csrfHeader]:csrfToken},body:JSON.stringify({query:q})});const data=await r.json();const el=document.getElementById('typingBubble');if(el)el.remove();addMsg(data.response||'UrbanAura AI did not return a response.','ai')}catch(err){const el=document.getElementById('typingBubble');if(el)el.remove();addMsg('UrbanAura AI is currently unavailable.','ai')}}
-    function initMap(){map=L.map('map',{zoomControl:false}).setView([18.5204,73.8567],11);L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(map);L.control.zoom({position:'bottomright'}).addTo(map);const bounds=[];<c:forEach var="prop" items="${properties}"><c:if test="${not empty prop.latitude and not empty prop.longitude}">(function(){const baseLat=${prop.latitude};const baseLng=${prop.longitude};const localityKey='<c:out value="${prop.localityName}"/>';const coordinateKey=baseLat.toFixed(5)+','+baseLng.toFixed(5);const usageCount=coordinateUsage[coordinateKey]||0;coordinateUsage[coordinateKey]=usageCount+1;const angle=usageCount*0.9;const radius=usageCount===0?0:0.0022*Math.ceil(usageCount/4);const adjustedLat=baseLat+(radius*Math.cos(angle));const adjustedLng=baseLng+(radius*Math.sin(angle));const icon=L.divIcon({html:'<div class="aura-marker"><span class="pulse"></span><span class="marker-pin"></span></div>',className:'',iconSize:[30,30],iconAnchor:[15,15]});const marker=L.marker([adjustedLat,adjustedLng],{icon:icon}).addTo(map);marker.bindPopup('<strong><c:out value="${prop.title}"/></strong><br><c:out value="${prop.localityName}"/><br>Aura <c:out value="${prop.auraScore}"/>');marker.on('mouseover',function(){marker.openPopup()});marker.on('mouseout',function(){marker.closePopup()});marker.on('click',function(){const card=document.querySelector('.property-card[data-id="<c:out value="${prop.id}"/>"]');if(card)openPropertyDetails(card)});if(!propertyMarkers[localityKey]){propertyMarkers[localityKey]=[]}propertyMarkers[localityKey].push(marker);bounds.push([adjustedLat,adjustedLng]);})();</c:if></c:forEach>if(bounds.length>1){map.fitBounds(bounds,{padding:[36,36]})}}
+    function initMap(){map=L.map('map',{zoomControl:false}).setView([18.5204,73.8567],11);L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap contributors &copy; CARTO'}).addTo(map);L.control.zoom({position:'bottomright'}).addTo(map);const bounds=[];<c:forEach var="prop" items="${mapProperties}"><c:if test="${not empty prop.latitude and not empty prop.longitude}">(function(){const baseLat=${prop.latitude};const baseLng=${prop.longitude};const localityKey='<c:out value="${prop.localityName}"/>';const coordinateKey=baseLat.toFixed(5)+','+baseLng.toFixed(5);const usageCount=coordinateUsage[coordinateKey]||0;coordinateUsage[coordinateKey]=usageCount+1;const angle=usageCount*0.9;const radius=usageCount===0?0:0.0022*Math.ceil(usageCount/4);const adjustedLat=baseLat+(radius*Math.cos(angle));const adjustedLng=baseLng+(radius*Math.sin(angle));const icon=L.divIcon({html:'<div class="aura-marker"><span class="pulse"></span><span class="marker-pin"></span></div>',className:'',iconSize:[30,30],iconAnchor:[15,15]});const marker=L.marker([adjustedLat,adjustedLng],{icon:icon}).addTo(map);marker.bindPopup('<strong><c:out value="${prop.title}"/></strong><br><c:out value="${prop.localityName}"/><br>Aura <c:out value="${prop.auraScore}"/>');marker.on('mouseover',function(){marker.openPopup()});marker.on('mouseout',function(){marker.closePopup()});marker.on('click',function(){const card=document.querySelector('.property-card[data-id="<c:out value="${prop.id}"/>"]');if(card)openPropertyDetails(card)});if(!propertyMarkers[localityKey]){propertyMarkers[localityKey]=[]}propertyMarkers[localityKey].push(marker);bounds.push([adjustedLat,adjustedLng]);})();</c:if></c:forEach>if(bounds.length>1){map.fitBounds(bounds,{padding:[36,36]})}}
     function initAqiSocket(){if(!chatEnabled)return;const socket=new SockJS('/ws-aura');stompClient=Stomp.over(socket);stompClient.debug=null;stompClient.connect({},function(){stompClient.subscribe('/topic/aqi',function(message){try{const payload=JSON.parse(message.body);const markers=propertyMarkers[payload.locality]||[];markers.forEach(function(marker){if(marker&&marker._icon){marker._icon.classList.add('marker-glow');setTimeout(function(){if(marker._icon)marker._icon.classList.remove('marker-glow')},1800)}})}catch(err){console.error('AQI parse failed',err)}})})}
     document.addEventListener('DOMContentLoaded',function(){initMap();initAqiSocket();renderCompareTray();});
-    document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDrawer();closeBookingModal();closeCompareDrawer()}});
+    document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeDrawer();closeBookingModal();closeCompareDrawer();if(window.closeUserHub)window.closeUserHub()}});
+</script>
+
+<script type="module">
+    import wsManager from '/js/websocket.js';
+    
+    window.openChatFromDrawer = function() {
+        if(!selectedPropertyElement) return;
+        const d = dataOf(selectedPropertyElement);
+        openUserHub();
+        loadChat(1, d.id, 'admin', d.title);
+    };
+    
+    window.openUserHub = function() {
+        document.getElementById('ownerChatBackdrop').classList.add('open');
+        document.getElementById('userHubDrawer').classList.add('open');
+        if (chatEnabled) fetchRecent();
+    };
+
+    window.closeUserHub = function() {
+        document.getElementById('ownerChatBackdrop').classList.remove('open');
+        document.getElementById('userHubDrawer').classList.remove('open');
+    };
+
+    const currentUserName = '<c:out value="${username}"/>';
+    const currentUserId = <c:out value="${currentUserId != null ? currentUserId : -1}"/>;
+    let currentAdminId = null;
+    let currentPropertyId = null;
+    let conversations = {};
+
+    if (chatEnabled) {
+        wsManager.connect(currentUserName, () => {
+            console.log("User connected to socket for chat");
+            fetchRecent();
+        });
+
+        wsManager.onMessageReceived((msg) => {
+            if ((msg.senderId == currentAdminId && msg.propertyId == currentPropertyId) || (msg.senderId === currentUserId)) {
+                appendUserMessage(msg.content, msg.senderId === currentUserId ? 'sent' : 'received');
+            }
+            fetchRecent();
+        });
+    }
+
+    function fetchRecent() {
+        conversations = {};
+        fetch('/api/messages/recent')
+            .then(r => r.json())
+            .then(data => {
+                const chatList = document.getElementById('userChatList');
+                chatList.innerHTML = '';
+                
+                data.forEach(msg => {
+                    const otherUserId = msg.senderId === currentUserId ? msg.receiverId : msg.senderId;
+                    const otherUserName = msg.senderId === currentUserId ? 'Owner/Admin' : msg.senderName;
+                    const key = otherUserId + '-' + msg.propertyId;
+                    
+                    if (!conversations[key]) {
+                        conversations[key] = msg;
+                        const div = document.createElement('div');
+                        const isUnread = (!msg.read && msg.senderId !== currentUserId);
+                        div.className = 'chat-list-item' + (isUnread ? ' unread' : '');
+                        div.id = 'chat-item-' + otherUserId + '-' + msg.propertyId;
+                        div.innerHTML = 
+                            '<div class="d-flex gap-3 align-items-center" style="display:flex; gap:12px; align-items:center;">' +
+                                '<div class="chat-avatar" style="background:#13252c;">O</div>' +
+                                '<div style="flex:1; min-width:0;">' +
+                                    '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+                                        '<div class="fw-bold" style="font-size:15px; color:var(--text); font-weight:bold;">' + otherUserName + (isUnread ? '<span style="display:inline-block; width:8px; height:8px; background:var(--accent); border-radius:50%; margin-left:8px;"></span>' : '') + '</div>' +
+                                    '</div>' +
+                                    '<div class="text-truncate mt-1" style="font-size:12px; color:var(--accent-deep); font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + msg.propertyTitle + '</div>' +
+                                    '<div class="text-muted mt-1 text-truncate" style="font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;' + (isUnread ? 'font-weight:600; color:var(--text) !important;' : 'color:var(--muted);') + '">' + (msg.senderId === currentUserId ? 'You: ' : '') + msg.content + '</div>' +
+                                '</div>' +
+                            '</div>';
+                        div.onclick = () => loadChat(otherUserId, msg.propertyId, otherUserName, msg.propertyTitle);
+                        chatList.appendChild(div);
+                    }
+                });
+            });
+    }
+
+    window.loadChat = function(adminId, propertyId, adminName, propertyTitle) {
+        currentAdminId = adminId;
+        currentPropertyId = propertyId;
+        
+        document.querySelectorAll('#userChatList .chat-list-item').forEach(el => el.classList.remove('active'));
+        const activeItem = document.getElementById('chat-item-' + adminId + '-' + propertyId);
+        if (activeItem) activeItem.classList.add('active');
+
+        document.getElementById('chatAdminName').innerText = 'with ' + adminName;
+        document.getElementById('chatPropTitle').innerText = propertyTitle;
+        
+        document.getElementById('userMessageInput').disabled = false;
+        document.getElementById('userSendBtn').disabled = false;
+        
+        fetch('/api/messages/history?userId=' + adminId + '&propertyId=' + propertyId)
+            .then(r => r.json())
+            .then(data => {
+                const container = document.getElementById('userMessagesContainer');
+                container.innerHTML = '';
+                
+                const secureMsg = document.createElement('div');
+                secureMsg.style.textAlign = 'center';
+                secureMsg.style.fontSize = '12px';
+                secureMsg.style.color = 'var(--muted)';
+                secureMsg.style.marginBottom = '16px';
+                secureMsg.innerHTML = 'End-to-end encrypted chat started';
+                container.appendChild(secureMsg);
+
+                data.forEach(msg => {
+                    appendUserMessage(msg.content, msg.senderId === currentUserId ? 'sent' : 'received');
+                });
+            });
+    };
+
+    window.appendUserMessage = function(content, type) {
+        const container = document.getElementById('userMessagesContainer');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-message ' + type;
+        msgDiv.textContent = content;
+        container.appendChild(msgDiv);
+        container.scrollTop = container.scrollHeight;
+    };
+
+    window.sendUserChat = function() {
+        const input = document.getElementById('userMessageInput');
+        const content = input.value.trim();
+        if (content && currentAdminId && currentPropertyId) {
+            wsManager.sendMessage(currentAdminId, currentPropertyId, content);
+            input.value = '';
+        }
+    };
 </script>
 </body>
 </html>

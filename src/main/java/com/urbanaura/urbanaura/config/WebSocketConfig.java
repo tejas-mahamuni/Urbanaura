@@ -19,9 +19,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        // This creates the "Topic" where AQI pulses will be broadcasted
-        config.enableSimpleBroker("/topic");
+        // This creates the "Topic" where AQI pulses will be broadcasted, and "queue" for private messaging
+        config.enableSimpleBroker("/topic", "/queue");
         config.setApplicationDestinationPrefixes("/app");
+        config.setUserDestinationPrefix("/user");
     }
 
     @Override

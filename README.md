@@ -32,10 +32,11 @@ UrbanAura Pune is a smart-city analytics and livability dashboard built with Spr
 - Excel-based seed loading for locality/property datasets
 - Multithreaded SDG-style sustainability report generation
 
-## Default Local Run
+## Quick Start
 
-1. Start MySQL and MongoDB. The repo includes `docker-compose.yml`.
-2. Set environment variables if you want to override defaults:
+1. Start MySQL (port 3307) and MongoDB (port 27017) locally.
+2. Clone the repository and navigate to the project directory.
+3. Run the application:
 
 ```powershell
 $env:MYSQL_URL="jdbc:mysql://localhost:3307/urbanaura?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"

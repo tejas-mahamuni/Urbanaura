@@ -18,11 +18,20 @@ public class AdminController {
     
     @Autowired
     private LocalityRepository localityRepository;
+    
+    @Autowired
+    private com.urbanaura.urbanaura.repository.UserRepository userRepository;
 
     @GetMapping("/dashboard")
-    public String dashboard(Model model) {
+    public String dashboard(Model model, java.security.Principal principal) {
         model.addAttribute("properties", propertyRepository.findAll());
         model.addAttribute("localities", localityRepository.findAll());
+        if (principal != null) {
+            model.addAttribute("username", principal.getName());
+            userRepository.findByUsername(principal.getName()).ifPresent(user -> {
+                model.addAttribute("currentUserId", user.getId());
+            });
+        }
         return "admin-dashboard";
     }
 
